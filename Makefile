@@ -15,7 +15,7 @@ debug: CCFLAGS += $(DEBUGFLAGS)
 debug: $(TARGET)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(MAINS)
 
 $(TARGET): % : %.cpp $(DEPS)
-	$(CC) -c -o $@ $< $(CCFLAGS)
+	$(CC) -c -o $(MAINS) $< $(CCFLAGS)
