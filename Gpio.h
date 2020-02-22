@@ -38,11 +38,20 @@ enum class GpioPinName: std::uint8_t {
   gpio27 = RPI_V2_GPIO_P1_13,
   gpio22 = RPI_V2_GPIO_P1_15,
   gpio10 = RPI_V2_GPIO_P1_19,
-  gpio19 = RPI_V2_GPIO_P1_35,   /*!< Can be PWM channel 1 in ALT FUN 5 */
-  gpio18 = RPI_V2_GPIO_P1_12,   /*!< Can be PWM channel 0 in ALT FUN 5 */
-  gpio13 = RPI_V2_GPIO_P1_33,   /*!< Can be PWM channel 1 in ALT FUN 0 */
-  gpio12 = RPI_V2_GPIO_P1_32,   /*!< Can be PWM channel 0 in ALT FUN 0 */
+  gpio19 = RPI_V2_GPIO_P1_35,
+  gpio18 = RPI_V2_GPIO_P1_12,
+  gpio13 = RPI_V2_GPIO_P1_33,
+  gpio12 = RPI_V2_GPIO_P1_32,
   gpio4 = RPI_V2_GPIO_P1_07
+};
+
+// Pin names
+enum class GpioPwmName: std::uint8_t {
+  unknown = 0xff,
+  pwm1_gpio19 = RPI_V2_GPIO_P1_35,   /*!< Can be PWM channel 1 in ALT FUN 5 */
+  pwm0_gpio18 = RPI_V2_GPIO_P1_12,   /*!< Can be PWM channel 0 in ALT FUN 5 */
+  pwm1_gpio13 = RPI_V2_GPIO_P1_33,   /*!< Can be PWM channel 1 in ALT FUN 0 */
+  pwm0_gpio12 = RPI_V2_GPIO_P1_32,   /*!< Can be PWM channel 0 in ALT FUN 0 */
 };
 
 // Functions
@@ -89,24 +98,30 @@ enum class GpioPwmMode: std::uint8_t {
   markspace = 1
 };
 
-// GPIO pin
-struct GpioPin {
-  GpioPinName name        = GpioPinName::unknown;
-  GpioFunction function   = GpioFunction::unknown;
-  GpioPullUp pullUp       = GpioPullUp::none;
-
-  // PWM
-  GpioPwmMode pwmMode     = GpioPwmMode::unknown;
-  std::uint32_t pwmRange  = 255;
-
-  std::uint32_t value     = 0;
+class GpioPinConfigCommon
+{
+  public:
+    virtual ~GpioPinConfigCommon() {}
 };
 
-enum class Feature {
-  unknown,
-  io,
-  pwm,
-  spi
+// GPIO
+class GpioPinIO : GpioPinConfigCommon
+{
+  public:
+    GpioPinName name      = GpioPinName::unknown;
+    bool value            = false;
+    GpioFunction function = GpioFunction::unknown;
+    GpioPullUp pullUp     = GpioPullUp::none;
+};
+
+// PWM
+class GpioPwm : GpioPinConfigCommon
+{
+  public:
+    GpioPwmName name    = GpioPwmName::unknown;
+    std::uint32_t value = 0;
+    GpioPwmMode mode    = GpioPwmMode::unknown;
+    std::uint32_t range = 0xff;
 };
 
 class Gpio {
@@ -114,18 +129,23 @@ class Gpio {
     Gpio(bool enable_spi = false);
     ~Gpio();
 
-    void setup_pin(GpioPin pin);
+    void setup_pin(GpioPinIO pin);
+    void setup_pin(GpioPwm pin);
     void setup_pwm(GpioPwmClock clock);
-    void read(std::list<GpioPin*> pin_list);
-    std::list<GpioPin*> get_pins_up(std::list<GpioPin*> pins_to_check);
-    void write(GpioPin* pin, std::uint8_t val);
+
+    void write(GpioPinIO* pin, bool val);
+    void write(GpioPwm* pin, std::uint32_t val);
+
+    std::list<GpioPinIO*> get_pins_up(std::list<GpioPinIO*> pins_to_check);
+    void read(std::list<GpioPinIO*> pin_list);
+    void read(std::list<GpioPwm*> pin_list);
 
   private:
+    bool enable_spi = false;
     int init_gpio();
-  	int init_spi();
-  	int close_gpio();
-    std::uint8_t get_pwm_channel(GpioPin pin);
-    Feature getFeature(GpioPin pin);
+    int init_spi();
+    int close_gpio();
+    std::uint8_t get_pwm_channel(GpioPwm pin);
 };
 
 #endif
