@@ -61,7 +61,7 @@ void Gpio::setup_pin(GpioPinIO pin) {
 	std::uint8_t fun_static = static_cast<std::uint8_t>(pin.function);
 
 	bcm2835_gpio_fsel(pin_static, fun_static);
-	LOG("setup pin:%d function:%d", pin_static, fun_static);
+	LOG("setup io pin:%d function:%d", pin_static, fun_static);
 
 	// if specified set PullUp resistor
 	if (pin.pullUp != GpioPullUp::none) {
@@ -72,38 +72,24 @@ void Gpio::setup_pin(GpioPinIO pin) {
 	}
 }
 
-void Gpio::setup_pin(GpioPwm pin) {
-	std::uint8_t channel = get_pwm_channel(pin);
+void Gpio::setup_pin(GpioPwm pwm) {
+	GpioPwmItem *item = pwm.item;
+	if (item != NULL) {
+		std::uint8_t pin = item->name;
+		std::uint8_t channel = item->channel;
+		std::uint8_t function = item->function;
 
-	if (channel >= 0 && pin.mode != GpioPwmMode::unknown) {
-		bcm2835_pwm_set_mode(channel, static_cast<std::uint8_t>(pin.mode), 1 /* 1=enable */);
+		bcm2835_gpio_fsel(pin, function);
+		LOG("setup pwm pin:%d function:%d", pin, function);
+
+		if (channel >= 0 && pwm.mode != GpioPwmMode::unknown) {
+			bcm2835_pwm_set_mode(channel, static_cast<std::uint8_t>(pwm.mode), 1 /* 1=enable */);
+		}
+
+		if (channel >= 0 && pwm.range > 0) {
+			bcm2835_pwm_set_range(channel, pwm.range);
+		}
 	}
-
-	if (channel >= 0 && pin.range > 0) {
-		bcm2835_pwm_set_range(channel, pin.range);
-	}
-}
-
-std::uint8_t Gpio::get_pwm_channel(GpioPwm pin) {
-	std::uint8_t channel = -1;
-
-	switch(pin.name) {
-		case GpioPwmName::pwm1_gpio19:
-		case GpioPwmName::pwm1_gpio13:
-			channel = 1;
-			break;
-
-		case GpioPwmName::pwm0_gpio18:
-		case GpioPwmName::pwm0_gpio12:
-			channel = 0;
-			break;
-
-		default:
-			channel = -1;
-			break;
-	}
-
-	return channel;
 }
 
 void Gpio::read(std::list<GpioPinIO*> pin_list) {
@@ -117,10 +103,13 @@ void Gpio::read(std::list<GpioPinIO*> pin_list) {
 
 void Gpio::read(std::list<GpioPwm*> pin_list) {
 	for (GpioPwm *pin : pin_list) {
-		std::uint8_t pin_static = static_cast<std::uint8_t>(pin->name);
-
-		pin->value = bcm2835_gpio_lev(pin_static);
-		LOG("read PWM pin:%d value:%d", pin_static, pin->value);
+		GpioPwmItem *item = pin->item;
+		if (item != NULL) {
+			pin->value = bcm2835_gpio_lev(item->name);
+			LOG("read PWM pin:%d value:%d", item->name, pin->value);
+		} else {
+			LOG("read PWM error: pin not initialized");
+		}
 	}
 }
 
@@ -151,11 +140,10 @@ void Gpio::write(GpioPinIO* pin, bool val) {
 }
 
 void Gpio::write(GpioPwm* pin, std::uint32_t val) {
-	std::uint8_t channel = get_pwm_channel(*pin);
-
-	if (channel >= 0) {
-		bcm2835_pwm_set_data(channel, val);
-		LOG("write PWM channel:%d value:%d", channel, val);
+	GpioPwmItem *item = pin->item;
+	if (item != NULL) {
+		bcm2835_pwm_set_data(item->channel, val);
+		LOG("write PWM channel:%d value:%d", item->channel, val);
 	} else {
 		std::cerr << "write PWM channel not found" << std::endl;
 	}

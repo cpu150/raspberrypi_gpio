@@ -32,7 +32,7 @@ using namespace std;
 #define BCM2835_INIT_SPI_ERROR  -2
 #define BCM2835_CLOSE_ERROR     -3
 
-// Pin names
+// GPIO pin names
 enum class GpioPinName: std::uint8_t {
   unknown = 0xff,
   gpio27 = RPI_V2_GPIO_P1_13,
@@ -45,26 +45,59 @@ enum class GpioPinName: std::uint8_t {
   gpio4 = RPI_V2_GPIO_P1_07
 };
 
-// Pin names
-enum class GpioPwmName: std::uint8_t {
-  unknown = 0xff,
-  pwm1_gpio19 = RPI_V2_GPIO_P1_35,   /*!< Can be PWM channel 1 in ALT FUN 5 */
-  pwm0_gpio18 = RPI_V2_GPIO_P1_12,   /*!< Can be PWM channel 0 in ALT FUN 5 */
-  pwm1_gpio13 = RPI_V2_GPIO_P1_33,   /*!< Can be PWM channel 1 in ALT FUN 0 */
-  pwm0_gpio12 = RPI_V2_GPIO_P1_32,   /*!< Can be PWM channel 0 in ALT FUN 0 */
+// PWM pin names
+enum class GpioPwmName {
+  pwm1_gpio19,
+  pwm0_gpio18,
+  pwm1_gpio13,
+  pwm0_gpio12
+};
+
+class GpioPwmItem {
+  private:
+    GpioPwmItem (
+      std::uint8_t name,
+      std::uint8_t function,
+      std::uint8_t channel
+    ) {
+      this->name = name;
+      this->function = function;
+      this->channel = channel;
+    }
+
+  public:
+    std::uint8_t name;
+    std::uint8_t function;
+    std::uint8_t channel;
+
+    static GpioPwmItem* create(GpioPwmName pwm_name) {
+      GpioPwmItem *item = NULL;
+      switch(pwm_name) {
+        case GpioPwmName::pwm1_gpio19:
+          item = new GpioPwmItem(RPI_V2_GPIO_P1_35, BCM2835_GPIO_FSEL_ALT5, 1);
+        break;
+
+        case GpioPwmName::pwm0_gpio18:
+        item = new GpioPwmItem(RPI_V2_GPIO_P1_12, BCM2835_GPIO_FSEL_ALT5, 0);
+        break;
+
+        case GpioPwmName::pwm1_gpio13:
+        item = new GpioPwmItem(RPI_V2_GPIO_P1_33, BCM2835_GPIO_FSEL_ALT0, 1);
+        break;
+
+        case GpioPwmName::pwm0_gpio12:
+        item = new GpioPwmItem(RPI_V2_GPIO_P1_32, BCM2835_GPIO_FSEL_ALT0, 0);
+        break;
+      }
+      return item;
+    }
 };
 
 // Functions
 enum class GpioFunction: std::uint8_t {
   unknown = 0xff,
   input = BCM2835_GPIO_FSEL_INPT,
-  output = BCM2835_GPIO_FSEL_OUTP,
-  alt0 = BCM2835_GPIO_FSEL_ALT0,
-  alt1 = BCM2835_GPIO_FSEL_ALT1,
-  alt2 = BCM2835_GPIO_FSEL_ALT2,
-  alt3 = BCM2835_GPIO_FSEL_ALT3,
-  alt4 = BCM2835_GPIO_FSEL_ALT4,
-  alt5 = BCM2835_GPIO_FSEL_ALT5
+  output = BCM2835_GPIO_FSEL_OUTP
 };
 
 // Pull up resistor
@@ -112,16 +145,36 @@ class GpioPinIO : GpioPinConfigCommon
     bool value            = false;
     GpioFunction function = GpioFunction::unknown;
     GpioPullUp pullUp     = GpioPullUp::none;
+
+    GpioPinIO (
+      GpioPinName name,
+      GpioFunction function = GpioFunction::unknown,
+      GpioPullUp pullUp     = GpioPullUp::none
+    ) {
+      this->name = name;
+      this->function = function;
+      this->pullUp = pullUp;
+    }
 };
 
 // PWM
 class GpioPwm : GpioPinConfigCommon
 {
   public:
-    GpioPwmName name    = GpioPwmName::unknown;
+    GpioPwmItem *item   = NULL;
     std::uint32_t value = 0;
     GpioPwmMode mode    = GpioPwmMode::unknown;
     std::uint32_t range = 0xff;
+
+    GpioPwm (
+      GpioPwmItem *item,
+      std::uint32_t range = 0xff,
+      GpioPwmMode mode    = GpioPwmMode::unknown
+    ) {
+      this->item = item;
+      this->range = range;
+      this->mode = mode;
+    }
 };
 
 class Gpio {
@@ -145,7 +198,6 @@ class Gpio {
     int init_gpio();
     int init_spi();
     int close_gpio();
-    std::uint8_t get_pwm_channel(GpioPwm pin);
 };
 
 #endif
