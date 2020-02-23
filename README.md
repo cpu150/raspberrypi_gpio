@@ -4,11 +4,11 @@ This class has been testred on  a Raspberry Pi Zero W only
 
 # DEPENDENCIES
 ## BCM2835 LIBRARY
-To install `BCM2835` library see instructions [here](http://www.airspayce.com/mikem/bcm2835)
-The `bcm2835/install.sh` script helps to download, compile and install the library however there is no guarantee it works on all OS
+To install the `bcm2835` library you can follow the instructions [here](http://www.airspayce.com/mikem/bcm2835)
+There is a script there: `bcm2835/install.sh` which is a helper to download and install the library but may not support all OS configurations
 
 # COMPILATION
 To compile this project there is a *Makefile*. Here are the available make commands:
-    - `all`       - build the project with applying the release configuration
-    - `debug`     - build the project with applying the debug configuration
-    - `clean`     - delete all generated files
+    - `all`   - build the project applying the *release* configuration
+    - `debug` - build the project applying the *debug* configuration
+    - `clean` - delete all generated files
