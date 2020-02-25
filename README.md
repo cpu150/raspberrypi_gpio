@@ -1,6 +1,6 @@
 # RASPBERRYPI_GPIO
 C++ class wrapping [BCM2835](http://www.airspayce.com/mikem/bcm2835) C library which helps to manage the GPIO port of a Raspberry Pi
-This class has been testred on  a Raspberry Pi Zero W only
+This class has been tested on a Raspberry Pi Zero W only
 
 # DEPENDENCIES
 ## BCM2835 LIBRARY
