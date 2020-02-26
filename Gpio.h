@@ -55,6 +55,10 @@ enum class GpioPwmName {
 
 class GpioPwmItem {
   private:
+    std::uint8_t name;
+    std::uint8_t function;
+    std::uint8_t channel;
+
     GpioPwmItem (
       std::uint8_t name,
       std::uint8_t function,
@@ -66,9 +70,9 @@ class GpioPwmItem {
     }
 
   public:
-    std::uint8_t name;
-    std::uint8_t function;
-    std::uint8_t channel;
+    std::uint8_t getName() { return name; }
+    std::uint8_t getFunction() { return function; }
+    std::uint8_t getChannel() { return channel; }
 
     static GpioPwmItem* create(GpioPwmName pwm_name) {
       GpioPwmItem *item = NULL;
@@ -131,20 +135,21 @@ enum class GpioPwmMode: std::uint8_t {
   markspace = 1
 };
 
-class GpioPinConfigCommon
-{
-  public:
-    virtual ~GpioPinConfigCommon() {}
-};
-
 // GPIO
-class GpioPinIO : GpioPinConfigCommon
+class GpioPinIO
 {
+private:
+  GpioPinName name      = GpioPinName::unknown;
+  bool value            = false;
+  GpioFunction function = GpioFunction::unknown;
+  GpioPullUp pullUp     = GpioPullUp::none;
+
   public:
-    GpioPinName name      = GpioPinName::unknown;
-    bool value            = false;
-    GpioFunction function = GpioFunction::unknown;
-    GpioPullUp pullUp     = GpioPullUp::none;
+    GpioPinName getName() { return name; }
+    bool getValue() { return value; }
+    void setValue(bool value) { this->value = value; }
+    GpioFunction getFunction() { return function; }
+    GpioPullUp getPullUp() { return pullUp; }
 
     GpioPinIO (
       GpioPinName name,
@@ -158,13 +163,20 @@ class GpioPinIO : GpioPinConfigCommon
 };
 
 // PWM
-class GpioPwm : GpioPinConfigCommon
+class GpioPwm
 {
-  public:
+  private:
     GpioPwmItem *item   = NULL;
     std::uint32_t value = 0;
     GpioPwmMode mode    = GpioPwmMode::unknown;
     std::uint32_t range = 0xff;
+
+  public:
+    GpioPwmItem* getItem() { return item; }
+    std::uint32_t getValue() { return value; }
+    void setValue(std::uint32_t value) { this->value = value; }
+    GpioPwmMode getMode() { return mode; }
+    std::uint32_t getRange() { return range; }
 
     GpioPwm (
       GpioPwmItem *item,
