@@ -9,7 +9,7 @@ if [ -f "${BCM2835}.tar.gz" ]; then
 	tar -zvxf ${BCM2835}.tar.gz
 else
 	echo "ERROR WHILE DOWNLOADING ${BCM2835} LIBRARY"
-	exit -1
+	tar -zvxf ../bcm2835-1.62_backup.tar.gz
 fi
 
 if [ ! -d ${BCM2835} ]; then
